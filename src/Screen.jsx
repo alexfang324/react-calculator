@@ -1,7 +1,7 @@
-function Screen() {
+function Screen({ displayVal }) {
   return (
     <div className="screen">
-      <h1>This is a screen</h1>
+      <h1 className="display-value">{displayVal == '' ? '0' : displayVal}</h1>
     </div>
   );
 }

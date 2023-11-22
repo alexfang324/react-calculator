@@ -135,14 +135,32 @@ function App() {
     setDisplayVal('');
   };
   const computeResult = () => {
+    console.log(operator && secondVal);
     //if operator exist, calculate result, else show previous result that was
     //stored in firstVal
-    const result = operator ? eval(firstVal + operator + secondVal) : firstVal;
-    setDisplayVal(result);
-    setFirstVal(result);
-    setSecondVal('');
-    //reset state variables for next calculation
-    setOperator('');
+    switch (true) {
+      case operator === '/' && secondVal === '0':
+        allClear();
+        setDisplayVal('Error');
+        break;
+      //only if all three states are filled may we compute the result
+      //here we must explicitly check each one against null or javascript will
+      //output value of secondVal
+      case firstVal !== '' && operator !== '' && secondVal !== '': {
+        const expression = firstVal + operator + secondVal;
+        //make sure only valid calculator expression is provided before we call eval()
+        const re = new RegExp('^[-+]?[0-9]+[-+*/][-+]?[0-9]$');
+        if (re.test(expression)) {
+          const result = eval(expression).toString();
+          setDisplayVal(result);
+          //set state variables for next calculation
+          setFirstVal(result);
+          setSecondVal('');
+          setOperator('');
+          break;
+        }
+      }
+    }
   };
 
   return (

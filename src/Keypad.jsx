@@ -1,19 +1,12 @@
 import { calculatorButtons } from '../data/button-data';
+import Button from './Button';
 
 function Keypad({ onBtnClick }) {
   const keypadGrid = (
     <div className="key-grid">
       {calculatorButtons.map((btn) => {
         return (
-          <button
-            key={btn.text}
-            className={btn.className}
-            onClick={() => {
-              onBtnClick(btn);
-            }}
-          >
-            {btn.text}
-          </button>
+          <Button key={btn.text} onBtnClick={onBtnClick} btnContent={btn} />
         );
       })}
     </div>

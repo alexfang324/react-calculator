@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import '../public/styles/App.css';
-
+import Header from './Header';
 import Screen from './Screen';
 import Keypad from './Keypad';
 function App() {
+  const headerText = 'React Calculator';
+
   //basic state variables to keep track of a calculation
   const [firstVal, setFirstVal] = useState('');
   const [secondVal, setSecondVal] = useState('');
@@ -29,13 +31,7 @@ function App() {
         memoryActionSwitch(text, value);
         break;
       case 'number': {
-        //while appenVal flag is on, added behind currently displayed string, else start a new string
-        const newVal = appendVal
-          ? (displayVal + value).toString()
-          : value.toString();
-        setDisplayVal(newVal);
-        setAppendVal(true);
-        updateCurVal(newVal);
+        numberActionSwitch(text, value);
         break;
       }
       //the +, -, *, / route
@@ -51,6 +47,7 @@ function App() {
         break;
       case 'percent': {
         const newVal = (parseFloat(displayVal) / 100).toString();
+        setOperator(value);
         setDisplayVal(newVal);
         updateCurVal(newVal);
         break;
@@ -97,6 +94,29 @@ function App() {
     }
   };
 
+  const numberActionSwitch = (text, value) => {
+    switch (true) {
+      //decimal is a special character with edge cases that needs to be handled
+      case text === '.' && operator === 'Percent':
+        setDisplayVal('0.');
+        updateCurVal('0');
+        break;
+      //if there is already a decimal on screen, simply ignore the decimal key press
+      case text === '.' && displayVal.includes('.'):
+        break;
+      default: {
+        //while appenVal flag is on, added behind currently displayed string, else start a new string
+        const newVal = appendVal
+          ? (displayVal + value).toString()
+          : value.toString();
+        setDisplayVal(newVal);
+        setAppendVal(true);
+        updateCurVal(newVal);
+        break;
+      }
+    }
+  };
+
   const updateCurVal = (newVal) => {
     onFirstVal ? setFirstVal(newVal) : setSecondVal(newVal);
   };
@@ -127,6 +147,7 @@ function App() {
 
   return (
     <div className="app">
+      <Header text={headerText} />
       <Screen displayVal={displayVal} />
       <Keypad onBtnClick={onBtnClick} />
     </div>

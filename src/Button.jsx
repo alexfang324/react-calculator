@@ -1,8 +1,14 @@
-function Button({ onBtnClick }) {
+function Button({ onBtnClick, btnContent }) {
   return (
-    <>
-      <button onClick={() => onBtnClick("clicked")}>This is a button</button>
-    </>
+    <button
+      key={btnContent.text}
+      className={`${btnContent.className} grid-item`}
+      onClick={() => {
+        onBtnClick(btnContent);
+      }}
+    >
+      {btnContent.text}
+    </button>
   );
 }
 

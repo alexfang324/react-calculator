@@ -82,12 +82,12 @@ function App() {
         setDisplayVal(memVal);
         break;
       case 'M-': {
-        const result = displayVal - memVal;
+        const result = memVal - displayVal;
         setDisplayVal(result);
         break;
       }
       case 'M+': {
-        const result = displayVal + memVal;
+        const result = memVal - displayVal;
         setDisplayVal(result);
         break;
       }

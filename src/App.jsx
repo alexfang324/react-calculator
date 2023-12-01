@@ -1,41 +1,53 @@
-import { useState } from 'react';
-import '../public/styles/App.css';
-import Header from './Header';
-import Screen from './Screen';
-import Keypad from './Keypad';
+import { useState } from "react";
+import "../public/styles/App.css";
+import Header from "./Header";
+import Screen from "./Screen";
+import Keypad from "./Keypad";
 function App() {
-  const headerText = 'React Calculator';
+  const headerText = "React Calculator";
+  const DISPLAY_DIGIT = 12;
+  const ERROR_DISPLAY_TEXT = "Error";
+
+  //Note on design choices:
+  //In order to display one operand at a time instead of a graphic calculator
+  //style of everything on the display, it's necessary for to define a
+  //secondVal, onFirstVal, and appendVal use state to handle switching between
+  //the first and second operands.
 
   //basic state variables to keep track of a calculation
-  const [firstVal, setFirstVal] = useState('');
-  const [secondVal, setSecondVal] = useState('');
-  const [operator, setOperator] = useState('');
+  const [firstVal, setFirstVal] = useState("");
+  const [secondVal, setSecondVal] = useState("");
+  const [operator, setOperator] = useState("");
   //state for the currently displayed key
-  const [displayVal, setDisplayVal] = useState('');
+  const [displayVal, setDisplayVal] = useState("");
   //flag for deciding if we are currently entering first or second value in a calculation
   const [onFirstVal, setOnFirstVal] = useState(true);
   //flag for deciding if we should append to currently display value string or start a new one
   const [appendVal, setAppendVal] = useState(true);
   //state for storing the current displayed value when memory storage key is pressed
-  const [memVal, setMemVal] = useState('');
+  const [memVal, setMemVal] = useState("");
 
   const onBtnClick = ({ type, text, value }) => {
+    //If error is display, ignore all except AC key press
+    if (displayVal == ERROR_DISPLAY_TEXT && text != "AC") {
+      return;
+    }
     switch (type) {
-      case 'clear':
-        text === 'AC' ? allClear() : clearCurrentVal();
+      case "clear":
+        text === "AC" ? allClear() : clearCurrentVal();
         break;
-      case 'enter':
+      case "enter":
         computeResult();
         break;
-      case 'memory':
+      case "memory":
         memoryActionSwitch(text, value);
         break;
-      case 'number': {
+      case "number": {
         numberActionSwitch(text, value);
         break;
       }
       //the +, -, *, / route
-      case 'operator':
+      case "operator":
         //if already enter second number, compute result first
         if (operator && firstVal && secondVal) {
           computeResult();
@@ -45,26 +57,26 @@ function App() {
         setOnFirstVal(false);
         setAppendVal(false);
         break;
-      case 'percent': {
+      case "percent": {
         const newVal = (parseFloat(displayVal) / 100).toString();
         setOperator(value);
-        setDisplayVal(newVal);
+        updateDisplay(newVal);
         updateCurVal(newVal);
         break;
       }
-      case 'sign': {
+      case "sign": {
         //convert value to float, flip its sign then convert back to string
         const newVal = (parseFloat(displayVal) * -1).toString();
-        setDisplayVal(newVal);
+        updateDisplay(newVal);
         //decide which state variable to update based on what's displayed. if we are on first
         //value, then the second value is always empty
-        secondVal == '' ? setFirstVal(newVal) : setSecondVal(newVal);
+        secondVal == "" ? setFirstVal(newVal) : setSecondVal(newVal);
         break;
       }
-      case 'sqrt': {
+      case "sqrt": {
         const newVal = Math.sqrt(parseFloat(displayVal)).toString();
-        setDisplayVal(newVal);
-        secondVal == '' ? setFirstVal(newVal) : setSecondVal(newVal);
+        updateDisplay(newVal);
+        secondVal == "" ? setFirstVal(newVal) : setSecondVal(newVal);
         break;
       }
     }
@@ -72,23 +84,23 @@ function App() {
 
   const memoryActionSwitch = (text, value) => {
     switch (text) {
-      case 'MS':
+      case "MS":
         setMemVal(displayVal);
         break;
-      case 'MC':
+      case "MC":
         setMemVal(0);
         break;
-      case 'MR':
-        setDisplayVal(memVal);
+      case "MR":
+        updateDisplay(memVal);
         break;
-      case 'M-': {
+      case "M-": {
         const result = memVal - displayVal;
-        setDisplayVal(result);
+        updateDisplay(result);
         break;
       }
-      case 'M+': {
+      case "M+": {
         const result = memVal - displayVal;
-        setDisplayVal(result);
+        updateDisplay(result);
         break;
       }
     }
@@ -97,19 +109,24 @@ function App() {
   const numberActionSwitch = (text, value) => {
     switch (true) {
       //decimal is a special character with edge cases that needs to be handled
-      case text === '.' && operator === 'Percent':
-        setDisplayVal('0.');
-        updateCurVal('0');
+      case text === "." && operator === "Percent":
+        updateDisplay("0.");
+        updateCurVal("0");
         break;
       //if there is already a decimal on screen, simply ignore the decimal key press
-      case text === '.' && displayVal.includes('.'):
+      case text === "." && displayVal.includes("."):
         break;
       default: {
-        //while appenVal flag is on, added behind currently displayed string, else start a new string
+        //if the display screen is full, ignore further number key press
+        //until we hit an operator or the equal key.
+        if (displayVal.length >= DISPLAY_DIGIT && operator == "") {
+          return;
+        }
+        //else, while appenVal flag is on, added behind currently displayed string, else start a new string
         const newVal = appendVal
           ? (displayVal + value).toString()
           : value.toString();
-        setDisplayVal(newVal);
+        updateDisplay(newVal);
         setAppendVal(true);
         updateCurVal(newVal);
         break;
@@ -121,46 +138,64 @@ function App() {
     onFirstVal ? setFirstVal(newVal) : setSecondVal(newVal);
   };
   const clearCurrentVal = () => {
-    setDisplayVal(0);
-    onFirstVal ? setFirstVal('') : setSecondVal('');
+    updateDisplay(0);
+    onFirstVal ? setFirstVal("") : setSecondVal("");
   };
 
   const allClear = () => {
-    setFirstVal('');
-    setSecondVal('');
-    setOperator('');
-    setMemVal('');
+    setFirstVal("");
+    setSecondVal("");
+    setOperator("");
+    setMemVal("");
     setOnFirstVal(true);
     setAppendVal(true);
-    setDisplayVal('');
+    updateDisplay("");
   };
   const computeResult = () => {
-    console.log(operator && secondVal);
     //if operator exist, calculate result, else show previous result that was
     //stored in firstVal
     switch (true) {
-      case operator === '/' && secondVal === '0':
+      case operator === "/" && secondVal === "0":
         allClear();
-        setDisplayVal('Error');
+        updateDisplay(ERROR_DISPLAY_TEXT);
         break;
       //only if all three states are filled may we compute the result
       //here we must explicitly check each one against null or javascript will
       //output value of secondVal
-      case firstVal !== '' && operator !== '' && secondVal !== '': {
-        const expression = firstVal + operator + secondVal;
+      case operator !== "": {
+        const val1 = firstVal == "" ? "0" : firstVal;
+        const val2 = secondVal == "" ? "0" : secondVal;
+        const expression = val1 + operator + val2;
         //make sure only valid calculator expression is provided before we call eval()
-        const re = new RegExp('^[-+]?[0-9]+[-+*/][-+]?[0-9]$');
+        const re = new RegExp("^[-+]?[0-9]+.?[0-9]*[-+*/][-+]?[0-9]+.?[0-9]*$");
+
         if (re.test(expression)) {
           const result = eval(expression).toString();
-          setDisplayVal(result);
+          updateDisplay(result);
           //set state variables for next calculation
           setFirstVal(result);
-          setSecondVal('');
-          setOperator('');
+          setSecondVal("");
+          setOperator("");
+          setOnFirstVal(true);
           break;
         }
       }
     }
+  };
+
+  const updateDisplay = (valString) => {
+    //default case when value is empty
+    if (valString == "" || valString == ERROR_DISPLAY_TEXT) {
+      setDisplayVal(valString);
+      return;
+    }
+
+    //truncate digits outside of the max allowed digits
+    valString =
+      valString.length >= DISPLAY_DIGIT
+        ? valString.slice(0, DISPLAY_DIGIT)
+        : valString;
+    setDisplayVal(valString);
   };
 
   return (

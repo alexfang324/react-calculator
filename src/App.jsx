@@ -5,6 +5,7 @@ import Screen from "./Screen";
 import Keypad from "./Keypad";
 function App() {
   const headerText = "React Calculator";
+  const headerText = "React Calculator";
   const DISPLAY_DIGIT = 12;
   const ERROR_DISPLAY_TEXT = "Error";
 
@@ -58,7 +59,8 @@ function App() {
         setAppendVal(false);
         break;
       case "percent": {
-        const newVal = (parseFloat(displayVal) / 100).toString();
+        const operand = onFirstVal ? firstVal : secondVal;
+        const newVal = (parseFloat(operand) / 100).toString();
         setOperator(value);
         updateDisplay(newVal);
         updateCurVal(newVal);
@@ -114,7 +116,10 @@ function App() {
         updateCurVal("0");
         break;
       //if there is already a decimal on screen, simply ignore the decimal key press
-      case text === "." && displayVal.includes("."):
+      case text === "." &&
+        ((onFirstVal && firstVal.includes(".")) ||
+          (!onFirstVal && secondVal.includes("."))):
+        console.log("here");
         break;
       default: {
         //if the display screen is full, ignore further number key press
@@ -166,19 +171,16 @@ function App() {
         const val1 = firstVal == "" ? "0" : firstVal;
         const val2 = secondVal == "" ? "0" : secondVal;
         const expression = val1 + operator + val2;
-        //make sure only valid calculator expression is provided before we call eval()
-        const re = new RegExp("^[-+]?[0-9]+.?[0-9]*[-+*/][-+]?[0-9]+.?[0-9]*$");
-
-        if (re.test(expression)) {
-          const result = eval(expression).toString();
-          updateDisplay(result);
-          //set state variables for next calculation
-          setFirstVal(result);
-          setSecondVal("");
-          setOperator("");
-          setOnFirstVal(true);
-          break;
-        }
+        let result = new Function("return " + expression)();
+        //display upto max digits and convert to string for displaying
+        result = result.toPrecision(DISPLAY_DIGIT).toString();
+        updateDisplay(result);
+        //set state variables for next calculation
+        setFirstVal(result);
+        setSecondVal("");
+        setOperator("");
+        setOnFirstVal(true);
+        break;
       }
     }
   };
@@ -197,7 +199,6 @@ function App() {
         : valString;
     setDisplayVal(valString);
   };
-
   return (
     <div className="app">
       <Header text={headerText} />

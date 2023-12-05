@@ -5,7 +5,6 @@ import Screen from "./Screen";
 import Keypad from "./Keypad";
 function App() {
   const headerText = "React Calculator";
-  const headerText = "React Calculator";
   const DISPLAY_DIGIT = 12;
   const ERROR_DISPLAY_TEXT = "Error";
 
@@ -90,18 +89,18 @@ function App() {
         setMemVal(displayVal);
         break;
       case "MC":
-        setMemVal(0);
+        setMemVal("");
         break;
       case "MR":
         updateDisplay(memVal);
         break;
       case "M-": {
-        const result = memVal - displayVal;
+        const result = (parseFloat(displayVal) - parseFloat(memVal)).toString();
         updateDisplay(result);
         break;
       }
       case "M+": {
-        const result = memVal - displayVal;
+        const result = (parseFloat(displayVal) + parseFloat(memVal)).toString();
         updateDisplay(result);
         break;
       }
@@ -143,7 +142,7 @@ function App() {
     onFirstVal ? setFirstVal(newVal) : setSecondVal(newVal);
   };
   const clearCurrentVal = () => {
-    updateDisplay(0);
+    updateDisplay("");
     onFirstVal ? setFirstVal("") : setSecondVal("");
   };
 
@@ -151,7 +150,6 @@ function App() {
     setFirstVal("");
     setSecondVal("");
     setOperator("");
-    setMemVal("");
     setOnFirstVal(true);
     setAppendVal(true);
     updateDisplay("");
@@ -172,8 +170,7 @@ function App() {
         const val2 = secondVal == "" ? "0" : secondVal;
         const expression = val1 + operator + val2;
         let result = new Function("return " + expression)();
-        //display upto max digits and convert to string for displaying
-        result = result.toPrecision(DISPLAY_DIGIT).toString();
+        result = removeTrailingZerosFromDecimals(result.toString());
         updateDisplay(result);
         //set state variables for next calculation
         setFirstVal(result);
@@ -199,6 +196,29 @@ function App() {
         : valString;
     setDisplayVal(valString);
   };
+
+  const removeTrailingZerosFromDecimals = (val) => {
+    if (!val.includes(".")) {
+      return val;
+    }
+    let newVal = val;
+    let counter = newVal.length;
+    //loop from end of the number
+    for (let i = newVal.length - 1; i >= 0; i--) {
+      //if it's a zero, decrement counter
+      if (newVal[i] == "0") {
+        counter--;
+        //if it's a period, decrement counter and get out of the loop
+      } else if (newVal[i] == ".") {
+        counter--;
+        break;
+      } else {
+        break;
+      }
+    }
+    return newVal.slice(0, counter);
+  };
+
   return (
     <div className="app">
       <Header text={headerText} />
